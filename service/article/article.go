@@ -1,8 +1,8 @@
 package article
 
 import (
-	"github.com/ciklumtech/models"
-	"github.com/ciklumtech/services"
+	"github.com/ciklumtech/model"
+	"github.com/ciklumtech/service"
 )
 
 const articlesURL = "https://storage.googleapis.com/aller-structure-task/articles.json"
@@ -13,6 +13,6 @@ func New() *Artice {
 	return &Artice{}
 }
 
-func (a *Artice) GetAll() (models.Response, error) {
-	return services.GetAll(articlesURL)
+func (a *Artice) GetAll() (model.Response, error) {
+	return service.GetAll(articlesURL)
 }

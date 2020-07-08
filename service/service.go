@@ -1,32 +1,32 @@
-package services
+package service
 
 import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/ciklumtech/models"
+	"github.com/ciklumtech/model"
 )
 
 // Provider is interface for any service
 type Provider interface {
-	GetAll() (models.Response, error)
+	GetAll() (model.Response, error)
 }
 
-// GetAll returs response from provided url
-func GetAll(url string) (models.Response, error) {
+// GetAll returs response from rovided url
+func GetAll(url string) (model.Response, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return models.Response{}, err
+		return model.Response{}, err
 	}
 	defer resp.Body.Close()
-	var response models.Response
+	var response model.Response
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return models.Response{}, err
+		return model.Response{}, err
 	}
 	if err := json.Unmarshal(b, &response); err != nil {
-		return models.Response{}, err
+		return model.Response{}, err
 	}
 	return response, err
 }

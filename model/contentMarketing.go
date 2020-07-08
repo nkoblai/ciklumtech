@@ -1,4 +1,4 @@
-package models
+package model
 
 type ContentMarketing struct {
 	Article

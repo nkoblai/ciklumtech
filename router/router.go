@@ -3,12 +3,12 @@ package router
 import (
 	"net/http"
 
-	"github.com/ciklumtech/handlers"
-	"github.com/ciklumtech/services/article"
-	"github.com/ciklumtech/services/contentmarketing"
+	"github.com/ciklumtech/handler"
+	"github.com/ciklumtech/service/article"
+	"github.com/ciklumtech/service/contentmarketing"
 )
 
-func registerHandlers(s *http.ServeMux, h handlers.Service) {
+func registerHandler(s *http.ServeMux, h handler.Service) {
 	s.HandleFunc("/merge", h.Merge)
 }
 
@@ -18,8 +18,8 @@ func New() *http.ServeMux {
 	contentMarketingService := contentmarketing.New()
 
 	server := http.NewServeMux()
-	handlers := handlers.New(articleService, contentMarketingService)
+	handler := handler.New(articleService, contentMarketingService)
 
-	registerHandlers(server, *handlers)
+	registerHandler(server, *handler)
 	return server
 }
