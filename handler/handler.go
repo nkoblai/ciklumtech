@@ -15,15 +15,18 @@ const (
 	articlesArrLen = 5
 )
 
+// Service represents handle service
 type Service struct {
 	article          service.Provider
 	contentMarketing service.Provider
 }
 
+// New creates new handle Service entity
 func New(article service.Provider, contentMarketing service.Provider) *Service {
 	return &Service{article, contentMarketing}
 }
 
+// Merge is a handle func for merge API call
 func (s *Service) Merge(w http.ResponseWriter, r *http.Request) {
 	articles, contentMarketing, httpError := s.getData()
 	if httpError != nil {
@@ -42,33 +45,35 @@ func (s *Service) Merge(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) getData() (model.Response, model.Response, error) {
-	servicesCount := 2
 
-	var wg sync.WaitGroup
-	errsCh := make(chan error, servicesCount)
-	var articles model.Response
-	var contentMarketing model.Response
+	var (
+		servicesCount    = 2
+		wg               sync.WaitGroup
+		errsCh           = make(chan error, servicesCount)
+		articles         model.Response
+		contentMarketing model.Response
+	)
 
 	wg.Add(servicesCount)
 	go func() {
+		defer wg.Done()
 		var err error
 		articles, err = s.article.GetAll()
 		if err != nil {
 			errsCh <- fmt.Errorf("getting articles error: %v", err)
-		} else {
-			errsCh <- nil
+			return
 		}
-		wg.Done()
+		errsCh <- nil
 	}()
 	go func() {
+		defer wg.Done()
 		var err error
 		contentMarketing, err = s.contentMarketing.GetAll()
 		if err != nil {
 			errsCh <- fmt.Errorf("getting content marketing error: %v", err)
-		} else {
-			errsCh <- nil
+			return
 		}
-		wg.Done()
+		errsCh <- nil
 	}()
 
 	wg.Wait()
@@ -85,10 +90,12 @@ func (s *Service) getData() (model.Response, model.Response, error) {
 }
 
 func merge(articles model.Response, contentMarketing model.Response) []model.ContentMarketing {
-	articlesLen := len(articles.Response.Items)
-	contentMarketingLen := len(contentMarketing.Response.Items)
 
-	result := createSlice(articlesLen, contentMarketingLen)
+	var (
+		articlesLen         = len(articles.Response.Items)
+		contentMarketingLen = len(contentMarketing.Response.Items)
+		result              = createSlice(articlesLen, contentMarketingLen)
+	)
 
 	for i := 0; ; i++ {
 		lastElemIdx := i*articlesArrLen + articlesArrLen
@@ -110,20 +117,24 @@ func merge(articles model.Response, contentMarketing model.Response) []model.Con
 }
 
 func appendArticlesAndContentMarketing(i int, articles, contentMarketing *model.Response, result *[]model.ContentMarketing) {
-	lastElemIdx := i*articlesArrLen + articlesArrLen
-	contentMarketingLen := len(contentMarketing.Response.Items)
+
+	var (
+		lastElemIdx         = i*articlesArrLen + articlesArrLen
+		contentMarketingLen = len(contentMarketing.Response.Items)
+	)
+
 	*result = append(*result, articles.Response.Items[i*articlesArrLen:lastElemIdx]...)
 	if i >= contentMarketingLen {
 		*result = append(*result, model.ContentMarketing{Article: model.Article{Type: "Ad"}})
-	} else {
-		*result = append(*result, contentMarketing.Response.Items[i])
+		return
 	}
+	*result = append(*result, contentMarketing.Response.Items[i])
 }
 
 func createSlice(articlesLen, contentMarketingLen int) []model.ContentMarketing {
-	var adCap int
-	if (articlesLen/articlesArrLen)-contentMarketingLen > 0 {
-		adCap = (articlesLen / articlesArrLen) - contentMarketingLen
+	adCap := (articlesLen / articlesArrLen) - contentMarketingLen
+	if adCap > 0 {
+		return make([]model.ContentMarketing, 0, articlesLen+contentMarketingLen+adCap)
 	}
-	return make([]model.ContentMarketing, 0, articlesLen+contentMarketingLen+adCap)
+	return make([]model.ContentMarketing, 0, articlesLen+contentMarketingLen)
 }

@@ -12,6 +12,7 @@ func registerHandler(s *http.ServeMux, h handler.Service) {
 	s.HandleFunc("/merge", h.Merge)
 }
 
+// New creates new ServeMux
 func New() *http.ServeMux {
 
 	articleService := article.New()

@@ -1,5 +1,6 @@
 package model
 
+// Article is article model
 type Article struct {
 	Type         string
 	HarvesterID  string
