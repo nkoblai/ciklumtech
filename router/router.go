@@ -4,8 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ciklumtech/handler"
-	"github.com/ciklumtech/service/article"
-	"github.com/ciklumtech/service/contentmarketing"
+	"github.com/ciklumtech/service"
 )
 
 func registerHandler(s *http.ServeMux, h handler.Service) {
@@ -13,14 +12,9 @@ func registerHandler(s *http.ServeMux, h handler.Service) {
 }
 
 // New creates new ServeMux
-func New() *http.ServeMux {
-
-	articleService := article.New()
-	contentMarketingService := contentmarketing.New()
-
+func New(a service.Provider, cm service.Provider) *http.ServeMux {
 	server := http.NewServeMux()
-	handler := handler.New(articleService, contentMarketingService)
-
+	handler := handler.New(a, cm)
 	registerHandler(server, *handler)
 	return server
 }
