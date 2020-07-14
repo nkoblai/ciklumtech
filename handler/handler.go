@@ -8,7 +8,6 @@ import (
 
 	"github.com/ciklumtech/model"
 	"github.com/ciklumtech/service"
-	"github.com/ciklumtech/web"
 )
 
 const (
@@ -28,23 +27,30 @@ func New(article service.Provider, contentMarketing service.Provider) *Service {
 
 // Merge is a handle func for merge API call
 func (s *Service) Merge(w http.ResponseWriter, r *http.Request) {
-	articles, contentMarketing, httpError := s.getData()
-	if httpError != nil {
-		web.ResponseWithError(w, httpError)
-		return
-	}
-
-	b, err := json.Marshal(merge(articles, contentMarketing))
-	if err != nil {
-		web.ResponseWithError(w, model.NewHTTPError(err.Error()))
-		return
-	}
-
-	web.ResponseWithStatusAndMessage(w, http.StatusOK, b)
-	return
+	data, statusCode := func() ([]byte, int) {
+		articles, contentMarketing, err := s.callProviders()
+		if err != nil {
+			return []byte(
+					model.NewHTTPError(
+						fmt.Sprintf("error gathering information from external services: %v", err)).Error(),
+				),
+				http.StatusInternalServerError
+		}
+		b, err := json.Marshal(merge(articles, contentMarketing))
+		if err != nil {
+			return []byte(
+					model.NewHTTPError(
+						fmt.Sprintf("error during marshaling response: %v", err)).Error()),
+				http.StatusInternalServerError
+		}
+		return b, http.StatusOK
+	}()
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	w.Write(data)
 }
 
-func (s *Service) getData() (model.Response, model.Response, error) {
+func (s *Service) callProviders() (model.Response, model.Response, error) {
 
 	var (
 		servicesCount    = 2
